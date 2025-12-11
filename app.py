@@ -504,20 +504,46 @@ class WiegandDecoder:
         except: pass
 
 def _extract_wiegand(bits, value):
-    """CHANGED: Add basic parity validation for 26-bit; pass-through for 34-bit."""
+    """Extract card number from Wiegand format. 
+    
+    For 26-bit: Extracts bits 1-24 (skips parity bits 0 and 25)
+    For 34-bit: Extracts bits 1-33 (skips parity bits 0 and 33)
+    
+    Note: Parity checking is not enforced as many real-world cards don't 
+    strictly follow parity, and different manufacturers use different schemes.
+    """
     b = f"{value:0{bits}b}"
     if bits == 26:
+        # Standard 26-bit Wiegand format:
+        # Bit 0: Even parity for bits 1-12 (not enforced)
+        # Bits 1-12: Facility code (8 bits) + Card number high (4 bits)
+        # Bits 13-24: Card number low (12 bits)
+        # Bit 25: Odd parity for bits 13-24 (not enforced)
+        
+        # Extract data bits (bits 1-24), skipping parity bits
         data = b[1:25]
-        # Even parity for first 12, odd parity for last 12 (typical 26-bit)
-        even_ok = (data[:12].count('1') % 2 == 0) == (b[0] == '0')
-        odd_ok  = (data[12:].count('1') % 2 == 1) == (b[-1] == '1')
-        if not (even_ok and odd_ok):
-            return None
-        return int(data, 2)
+        card_int = int(data, 2)
+        
+        # Optional: Log parity for debugging (but don't reject)
+        first_12 = data[:12]
+        last_12 = data[12:]
+        first_12_parity = first_12.count('1') % 2
+        last_12_parity = last_12.count('1') % 2
+        
+        # Check parity for logging purposes only
+        expected_even_parity = '0' if first_12_parity == 0 else '1'
+        expected_odd_parity = '1' if last_12_parity == 1 else '0'
+        
+        if b[0] != expected_even_parity or b[-1] != expected_odd_parity:
+            logging.debug(f"26-bit Wiegand parity mismatch (accepted anyway): value={value:026b}, card={card_int}, reader may use different parity scheme")
+        
+        return card_int
+        
     elif bits == 34:
-        # Parity schemes vary; keep as-is unless you know the scheme
+        # 34-bit format: Extract bits 1-33 (skip parity bits 0 and 33)
         data = b[1:33]
         return int(data, 2)
+    
     return None
 
 # =========================
@@ -569,11 +595,16 @@ recent_transactions = deque(maxlen=200)
 transaction_queue = Queue()
 
 def handle_access(bits, value, reader_id):
-    if bits not in (26,34): return
+    if bits not in (26,34): 
+        logging.warning(f"Invalid Wiegand bit count: {bits}, expected 26 or 34")
+        return
     card_int = _extract_wiegand(bits, value)
     if card_int is None:
-        logging.warning("Wiegand parity failed; dropping read")
+        logging.warning(f"Wiegand extraction failed for {bits}-bit format, value={value:0{bits}b}")
         return
+    
+    # Log successful extraction for debugging
+    logging.debug(f"Wiegand {bits}-bit read: raw_value={value:0{bits}b}, extracted_card={card_int}, reader={reader_id}")
 
     if not rate_limiter.should_process(card_int):
         logging.info(f"Duplicate ignored: {card_int}")
