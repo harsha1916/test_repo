@@ -25,7 +25,7 @@ except Exception:
 # Env & constants
 # =========================
 load_dotenv()
-BASE_DIR   = os.environ.get('BASE_DIR', '/home/maxpark')
+BASE_DIR   = os.environ.get('BASE_DIR', '/home/pi/accessctl')
 os.makedirs(BASE_DIR, exist_ok=True)
 
 # File paths
@@ -749,7 +749,32 @@ def cleanup_expired_sessions():
         for t in expired:
             active_sessions.pop(t, None)
 
+def check_basic_auth():
+    """Check HTTP Basic Authentication credentials."""
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Basic '):
+        return False
+    try:
+        # Extract and decode base64 credentials
+        encoded = auth_header.replace('Basic ', '', 1)
+        decoded = base64.b64decode(encoded).decode('utf-8')
+        username, password = decoded.split(':', 1)
+        # Verify credentials
+        if username == ADMIN_USERNAME and verify_password(password, ADMIN_PASSWORD_HASH):
+            logging.debug(f"Basic Auth successful for user: {username}")
+            return True
+        else:
+            logging.warning(f"Basic Auth failed: invalid credentials for user: {username}")
+    except Exception as e:
+        logging.error(f"Basic Auth decode error: {e}")
+    return False
+
 def is_authenticated():
+    """Check if request is authenticated via token OR Basic Auth."""
+    # Check Basic Auth first
+    if check_basic_auth():
+        return True
+    # Check token auth (for UI compatibility)
     token = request.headers.get('Authorization','').replace('Bearer ','')
     with SESS_LOCK:
         return token in active_sessions
@@ -763,21 +788,36 @@ def require_auth(f):
     return _w
 
 def require_api_key(f):
+    """Accept either X-API-Key header OR Basic Auth."""
     @wraps(f)
     def _w(*a,**k):
+        # Check Basic Auth (username:password)
+        if check_basic_auth():
+            return f(*a,**k)
+        # Check API key header
         if request.headers.get('X-API-Key') != API_KEY:
             return jsonify({"status":"error","message":"Invalid API key"}), 401
         return f(*a,**k)
     return _w
 
 def require_both(f):
-    """CHANGED: Defense-in-depth for mutating routes (API key + session)."""
+    """Defense-in-depth: Accept Basic Auth OR (API key + token).
+    
+    For UI: requires token + API key
+    For API clients: Basic Auth (username:password) is sufficient
+    """
     @wraps(f)
     def _w(*a,**k):
+        # Basic Auth bypasses both checks (username:password is enough)
+        if check_basic_auth():
+            return f(*a,**k)
+        # For token-based auth, require both API key and token
         if request.headers.get('X-API-Key') != API_KEY:
             return jsonify({"status":"error","message":"Invalid API key"}), 401
-        if not is_authenticated():
-            return jsonify({"status":"error","message":"Authentication required"}), 401
+        token = request.headers.get('Authorization','').replace('Bearer ','')
+        with SESS_LOCK:
+            if token not in active_sessions:
+                return jsonify({"status":"error","message":"Authentication required"}), 401
         return f(*a,**k)
     return _w
 
@@ -820,6 +860,29 @@ def logout():
     with SESS_LOCK:
         active_sessions.pop(token, None)
     return jsonify({"status":"success"})
+
+@app.route("/test_auth")
+def test_auth():
+    """Test endpoint to verify authentication methods."""
+    basic_auth_works = check_basic_auth()
+    token_auth_works = False
+    token = request.headers.get('Authorization','').replace('Bearer ','')
+    if token:
+        with SESS_LOCK:
+            token_auth_works = token in active_sessions
+    
+    auth_header = request.headers.get('Authorization', '')
+    
+    return jsonify({
+        "status": "info",
+        "basic_auth_detected": auth_header.startswith('Basic '),
+        "basic_auth_works": basic_auth_works,
+        "token_auth_detected": auth_header.startswith('Bearer '),
+        "token_auth_works": token_auth_works,
+        "is_authenticated": is_authenticated(),
+        "auth_header_preview": auth_header[:20] + "..." if len(auth_header) > 20 else auth_header,
+        "admin_username": ADMIN_USERNAME
+    })
 
 @app.route("/status")
 def status():

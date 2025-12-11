@@ -766,3 +766,16 @@ with advanced analytics, comprehensive reports, and user-friendly interface!
 
 ================================================================================
 
+{
+  "type": "service_account",
+  "project_id": "maxpark-it-apps-dev",
+  "private_key_id": "09bae24e136ea7f27f5f192dc34c8820c3ffea20",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1RYICjgWE9YUD\ng12P628fV699KaCJYlPKswvaImnk0gKmiGXeon58HGn0yPHS+BIC126MdtyFkgXb\nznY/MAeBMmmOwlhNiOBd380fL8m5iPZEgxrkerjYgbJJNceKi6PhmD6lgae79TQL\n3DsxkTldchG3O8s/Oycu7b1tEGSWI8NLtgMXef2McvniZn47MDkN7u8IL+236NLt\ne+KXYw6YNDjnSm6z8t6amKUvRaRjZH68E70aHPIP7m1Ib85P/Qzmlri36lY6L37P\nyDI3j9cAqREnbwC9UzlbIWTdTvwqPfgmtJLBS7sa6C3IyMGrYbU/0WP+my904MZ3\nhiL8xm0dAgMBAAECggEAChI9uhjxleSy37JC7ACXe2/P6GMm2rXeVELks9lj9cUf\nRZO1c+GmUmHybG8Pqc+Dkf8t0rBglIE7lxieTujDD1AMN6ofkCs8gAAJBvm3j6SG\n6OE53huIEpYIyvLUeSOaAX+Hwi1KcvHEKFaI6WTurCeZdAs77HGZEzfn5YaFeCaW\nG5lSSuAD96pp+UXTNuEdtCkjyal5Ea3u2sxJi62QgCmLlM3OPwwLk4DslBxIc3ju\nHowMSIcrKI6KLdpTObojJNgMEJ1xYEiTSW9gT3ujw8po8iSvbYuacQ7s46DZKDh/\nlGf/btUtsJT5bEw2vneGHwznlZqfwc8vBEdwQX2IQQKBgQDvv3/yygl3js13c3ag\nMK+twAbYMo0E3TgVzXG3CP9WJb6dIOMLSDYdn2qNmAJUsJVdHqX8eaeqpJzM6SL+\np5jGqx1t3E51VuDdijrYICPKYipjjncCBkgKGbXueXY7SfX3UGEUFPVLtpjMxwfU\nTM8vRyXqUQds9nQclg7A4p+fPQKBgQDBjzpHLNSd3us+j+bYcu6OqNwg/wFo2XK5\nuPKg1Lldjyc47AywSeMrAzrt3HRzoYKbdXWFhz6jIXiAXdvDdLDBD2m2zZUDLpAI\nulgitgnZE8E+CjBsVMCK8rhk1TlD2ntRbXgl2h+JDx8W3E4x2/tAVrEsI++yMvE0\nbG55pfjjYQKBgEj+A8V2j5VP6+xvQfGZgRMkQLE4CsktVPMGXpW8boja6wLJzXZU\n4Oz56SX83tDMBl2YhC6vF0YT4g1c+aOQgSoTVN1q0pRVBBdPC4Vbm6n1YzR2XnNG\nWE6C72oQnteEOBe46CWGD/yiNjk6a37Od9HMFpYVX25kRouhgBJnrPN9AoGBALaJ\niU9IMvbzHGzyrqRftyQokPg5JK4pq20EwyPzmSBneXjP+6Ng+vA8ap2ZMuU9YnuT\nSRJ1Ghgj341HdpIcgPiAvZRcynOmvMTOX4HUpPLoE2yblVEEmFQxVL4a65dW+scu\n8ojX7LeH4Czh9IhGyerCFvHmrg0ix6BFxeXJJS/hAoGAXBrteWs+/dr5HRekzd+U\nJUDd+RxyyS8I0KU2C0xQslU+wVgafVanWH40NhvNeuR4okrHT/Zk0QeMXKU1NUH2\nJbgx0c90rza7wDgGOy+L6Gf1j7JYij+NCCG3k2HSSiBr7o7OoZVdIUn/anAkhSdR\ncpBOALHVxOXEkYb6QPGmHfQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@maxpark-it-apps-dev.iam.gserviceaccount.com",
+  "client_id": "109764803111641850075",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40maxpark-it-apps-dev.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
