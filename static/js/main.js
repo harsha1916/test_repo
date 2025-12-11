@@ -57,13 +57,34 @@ function debounce(func, wait) {
 // =========================
 async function apiCall(endpoint, options = {}) {
     try {
+        const headers = getHeaders();
+        
+        // Check if we have required auth headers
+        const token = localStorage.getItem('authToken');
+        if (!token && endpoint !== '/login' && endpoint !== '/status') {
+            console.warn('No auth token found, redirecting to login');
+            window.location.href = '/login';
+            return null;
+        }
+        
         const response = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
-            headers: getHeaders()
+            headers: headers
         });
 
         if (response.status === 401) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.message || 'Authentication required';
+            
+            // Clear token and redirect to login
             localStorage.removeItem('authToken');
+            localStorage.removeItem('username');
+            
+            // Show error message before redirect
+            if (errorMsg.includes('expired') || errorMsg.includes('invalid')) {
+                alert('Your session has expired. Please login again.');
+            }
+            
             window.location.href = '/login';
             return null;
         }
@@ -979,6 +1000,7 @@ function initConfiguration() {
 }
 
 async function saveTrackingSettings() {
+    // Preserve all existing config
     const newConfig = {
         ...currentConfig,
         scan_delay_seconds: parseInt(document.getElementById('scanDelay').value),
@@ -1010,6 +1032,7 @@ async function saveTrackingSettings() {
 }
 
 async function saveEntitySettings() {
+    // Preserve all existing config
     const newConfig = {
         ...currentConfig,
         entity_id: document.getElementById('entityId').value.trim() || 'default_entity'
@@ -1037,7 +1060,24 @@ async function saveEntitySettings() {
 }
 
 async function saveConfiguration() {
+    // Check authentication before attempting save
+    const token = localStorage.getItem('authToken');
+    const apiKey = localStorage.getItem('apiKey') || API_KEY;
+    
+    if (!token) {
+        showNotification('Please login first', 'error');
+        window.location.href = '/login';
+        return;
+    }
+    
+    if (!apiKey || apiKey === 'your-api-key-change-this') {
+        showNotification('API key not configured. Please set it in localStorage or use the setup page.', 'error');
+        return;
+    }
+    
+    // Preserve existing config and only update changed fields
     const newConfig = {
+        ...currentConfig,  // Preserve all existing settings
         wiegand_bits: {
             reader_1: parseInt(document.getElementById('reader1Bits').value),
             reader_2: parseInt(document.getElementById('reader2Bits').value),
@@ -1070,7 +1110,18 @@ async function saveConfiguration() {
         currentConfig = newConfig;
         displayConfiguration(newConfig);
     } else {
-        showNotification(result?.data?.message || 'Failed to save configuration', 'error');
+        const errorMsg = result?.data?.message || result?.error || 'Failed to save configuration';
+        console.error('Save configuration error:', errorMsg, result);
+        showNotification(errorMsg, 'error');
+        
+        // If authentication error, suggest re-login
+        if (errorMsg.includes('Authentication') || errorMsg.includes('expired') || errorMsg.includes('invalid')) {
+            setTimeout(() => {
+                if (confirm('Authentication error. Would you like to login again?')) {
+                    window.location.href = '/login';
+                }
+            }, 1000);
+        }
     }
 }
 
@@ -1133,6 +1184,21 @@ async function updateSecuritySettings() {
 }
 
 async function saveAuthSettings() {
+    // Check authentication before attempting save
+    const token = localStorage.getItem('authToken');
+    const apiKey = localStorage.getItem('apiKey') || API_KEY;
+    
+    if (!token) {
+        showNotification('Please login first', 'error');
+        window.location.href = '/login';
+        return;
+    }
+    
+    if (!apiKey || apiKey === 'your-api-key-change-this') {
+        showNotification('API key not configured. Please set it in localStorage or use the setup page.', 'error');
+        return;
+    }
+    
     if (!currentConfig) {
         showNotification('Configuration not loaded. Please refresh the page.', 'error');
         return;
@@ -1163,7 +1229,18 @@ async function saveAuthSettings() {
         showNotification(`Basic HTTP authentication ${status} successfully!`, 'success');
         currentConfig = newConfig;
     } else {
-        showNotification(result?.data?.message || 'Failed to save authentication settings', 'error');
+        const errorMsg = result?.data?.message || result?.error || 'Failed to save authentication settings';
+        console.error('Save auth settings error:', errorMsg, result);
+        showNotification(errorMsg, 'error');
+        
+        // If authentication error, suggest re-login
+        if (errorMsg.includes('Authentication') || errorMsg.includes('expired') || errorMsg.includes('invalid')) {
+            setTimeout(() => {
+                if (confirm('Authentication error. Would you like to login again?')) {
+                    window.location.href = '/login';
+                }
+            }, 1000);
+        }
     }
 }
 

@@ -819,9 +819,16 @@ def is_authenticated():
     # Check token-based authentication (Bearer token)
     if auth_header.startswith('Bearer '):
         token = auth_header.replace('Bearer ', '')
-        with SESS_LOCK:
-            if token and token in active_sessions:
-                return True
+        if token:
+            with SESS_LOCK:
+                if token in active_sessions:
+                    # Check if token has expired
+                    session_data = active_sessions[token]
+                    if datetime.now() <= session_data.get('expires', datetime.now()):
+                        return True
+                    else:
+                        # Token expired, remove it
+                        active_sessions.pop(token, None)
     
     # Check Basic HTTP authentication
     if check_basic_auth():
@@ -863,11 +870,34 @@ def require_both(f):
         
         # Otherwise, require both API key and token
         api_key = request.headers.get('X-API-Key')
+        auth_header = request.headers.get('Authorization', '')
+        
+        # Check API key first
+        if not api_key:
+            logging.warning(f"API key missing for {request.path}")
+            return jsonify({"status":"error","message":"API key required"}), 401
+        
         if api_key != API_KEY:
+            logging.warning(f"Invalid API key for {request.path}")
             return jsonify({"status":"error","message":"Invalid API key"}), 401
         
+        # Check authentication (token or Basic Auth)
         if not is_authenticated():
-            return jsonify({"status":"error","message":"Authentication required"}), 401
+            # Provide more specific error message
+            if not auth_header:
+                logging.warning(f"Authentication header missing for {request.path}")
+                return jsonify({"status":"error","message":"Authentication required. Please login again."}), 401
+            elif auth_header.startswith('Bearer '):
+                token = auth_header.replace('Bearer ', '')
+                if not token:
+                    logging.warning(f"Empty Bearer token for {request.path}")
+                    return jsonify({"status":"error","message":"Invalid token. Please login again."}), 401
+                else:
+                    logging.warning(f"Token expired or invalid for {request.path}")
+                    return jsonify({"status":"error","message":"Token expired or invalid. Please login again."}), 401
+            else:
+                logging.warning(f"Invalid authentication header format for {request.path}")
+                return jsonify({"status":"error","message":"Authentication required. Please login again."}), 401
         
         return f(*a,**k)
     return _w
