@@ -1,0 +1,328 @@
+================================================================================
+  📝 .ENV FILE SETUP GUIDE
+================================================================================
+
+QUICK SETUP (3 Steps):
+
+Step 1: CREATE .ENV FILE
+  On your Raspberry Pi:
+    cd /home/pi/accessctl
+    cp env.template .env
+
+Step 2: GENERATE SECURE CREDENTIALS
+  Run these commands and copy outputs:
+
+  # Admin password hash (for password "YourSecurePassword123"):
+  python3 -c "import hashlib; password='YourSecurePassword123'; print(hashlib.sha256(password.encode()).hexdigest())"
+  
+  # API key:
+  python3 -c "import secrets; print(secrets.token_hex(32))"
+  
+  # Session secret:
+  python3 -c "import secrets; print(secrets.token_hex(32))"
+
+Step 3: EDIT .ENV FILE
+  nano .env
+  
+  Replace these values:
+    ADMIN_PASSWORD_HASH=<paste hash from step 2>
+    API_KEY=<paste API key from step 2>
+    SESSION_SECRET=<paste session secret from step 2>
+  
+  Save: Ctrl+O, Enter, Ctrl+X
+
+================================================================================
+EXAMPLE SECURE .ENV FILE
+================================================================================
+
+# After running the commands above, your .env might look like:
+
+BASE_DIR=/home/pi/accessctl
+
+# Firebase (optional - leave as-is for offline operation)
+FIREBASE_CRED_FILE=service.json
+ENTITY_ID=main_office
+
+# Logging
+LOG_FILE=/home/pi/accessctl/access.log
+LOG_LEVEL=INFO
+
+# Authentication
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
+API_KEY=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
+SESSION_TTL_HOURS=24
+SESSION_SECRET=fedcba0987654321098765432109876543210fedcba098765432109876543210
+
+# RFID Configuration
+SCAN_DELAY_SECONDS=60
+WIEGAND_BITS_READER_1=26
+WIEGAND_BITS_READER_2=26
+WIEGAND_BITS_READER_3=26
+WIEGAND_TIMEOUT_MS=25
+
+# GPIO Pins (default configuration)
+RELAY_1=25
+RELAY_2=26
+RELAY_3=27
+D0_PIN_1=18
+D1_PIN_1=23
+D0_PIN_2=19
+D1_PIN_2=24
+D0_PIN_3=20
+D1_PIN_3=21
+
+# Storage
+MAX_TX_STORAGE_GB=16
+CLEANUP_FRACTION=0.5
+TX_STORAGE_CHECK_INTERVAL=300
+
+# Flask
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5001
+FLASK_DEBUG=false
+
+================================================================================
+IMPORTANT: API KEY IN BROWSER
+================================================================================
+
+After setting API_KEY in .env, you MUST configure it in your browser!
+
+Method 1: Setup Page (Easiest)
+  1. Open: http://YOUR_PI_IP:5001/setup
+  2. Enter the same API_KEY value from .env
+  3. Click "Save API Key"
+  4. Proceed to login
+
+Method 2: Browser Console
+  1. Press F12 (open Developer Tools)
+  2. Go to Console tab
+  3. Run: setApiKey('your-api-key-from-env')
+  4. Refresh page
+
+Method 3: Manual localStorage
+  1. Press F12
+  2. Go to Application → Local Storage
+  3. Add key: apiKey
+  4. Value: your-api-key-from-env
+  5. Refresh page
+
+⚠️ THE API_KEY IN BROWSER MUST MATCH THE API_KEY IN .ENV FILE!
+
+================================================================================
+FILE PERMISSIONS
+================================================================================
+
+After creating .env file, set proper permissions:
+
+  # Make .env readable only by owner
+  chmod 600 /home/pi/accessctl/.env
+  
+  # Verify
+  ls -la /home/pi/accessctl/.env
+  # Should show: -rw------- (owner read/write only)
+
+Security: Prevents other users from reading your credentials
+
+================================================================================
+CUSTOMIZATION EXAMPLES
+================================================================================
+
+EXAMPLE 1: High-Traffic Office
+  SCAN_DELAY_SECONDS=30
+  WIEGAND_BITS_READER_1=26
+  WIEGAND_BITS_READER_2=26
+  MAX_TX_STORAGE_GB=32
+
+EXAMPLE 2: Parking Garage
+  SCAN_DELAY_SECONDS=120
+  WIEGAND_BITS_READER_1=26
+  MAX_TX_STORAGE_GB=16
+
+EXAMPLE 3: Mixed Card System
+  WIEGAND_BITS_READER_1=26  # Employee cards
+  WIEGAND_BITS_READER_2=34  # Admin cards
+  WIEGAND_BITS_READER_3=26  # Visitor cards
+
+EXAMPLE 4: Multi-Site Deployment
+  # Site A:
+  ENTITY_ID=building_a
+  
+  # Site B:
+  ENTITY_ID=building_b
+  
+  # Site C:
+  ENTITY_ID=warehouse_main
+
+================================================================================
+DEFAULT VALUES
+================================================================================
+
+If .env file is not found or values missing, defaults are:
+
+BASE_DIR=/home/pi/accessctl
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+  (password: "admin123")
+API_KEY=your-api-key-change-this
+SESSION_TTL_HOURS=24
+SCAN_DELAY_SECONDS=60
+WIEGAND_BITS_READER_1=26
+WIEGAND_BITS_READER_2=26
+WIEGAND_BITS_READER_3=26
+WIEGAND_TIMEOUT_MS=25
+RELAY_1=25
+RELAY_2=26
+RELAY_3=27
+D0_PIN_1=18
+D1_PIN_1=23
+D0_PIN_2=19
+D1_PIN_2=24
+D0_PIN_3=20
+D1_PIN_3=21
+MAX_TX_STORAGE_GB=16
+CLEANUP_FRACTION=0.5
+TX_STORAGE_CHECK_INTERVAL=300
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5001
+FLASK_DEBUG=false
+ENTITY_ID=default_entity
+
+⚠️ These defaults are NOT secure - change before production!
+
+================================================================================
+CHECKLIST
+================================================================================
+
+Before starting the service:
+
+[ ] .env file created from env.template
+[ ] ADMIN_PASSWORD_HASH changed (not default)
+[ ] API_KEY changed (not "your-api-key-change-this")
+[ ] SESSION_SECRET generated (not empty)
+[ ] FLASK_DEBUG=false (not true)
+[ ] File permissions set (chmod 600)
+[ ] GPIO pins match your wiring
+[ ] WIEGAND_BITS match your cards (test if unsure)
+[ ] BASE_DIR directory exists
+[ ] pigpiod service running
+
+After starting the service:
+
+[ ] Can access web interface
+[ ] Configure API key in browser (at /setup)
+[ ] Can login with credentials
+[ ] Dashboard loads without errors
+[ ] System status shows all green
+[ ] Can scan RFID card
+[ ] Card is recognized
+[ ] Relay operates (door opens)
+[ ] Transaction appears in dashboard
+
+================================================================================
+TESTING YOUR .ENV CONFIGURATION
+================================================================================
+
+1. START SERVICE:
+   python3 app.py
+   
+   Look for:
+   ✓ "Access controller ready. Waiting for Wiegand scans…"
+   ✓ "Wiegand readers initialized: R1=26bit, R2=26bit, R3=26bit"
+   ✓ No error messages
+
+2. ACCESS WEB INTERFACE:
+   http://YOUR_PI_IP:5001
+   
+   Should redirect to login page
+
+3. CONFIGURE API KEY:
+   Visit: http://YOUR_PI_IP:5001/setup
+   Enter the API_KEY from your .env file
+
+4. LOGIN:
+   Username: Value of ADMIN_USERNAME (default: admin)
+   Password: The password you used to generate the hash
+
+5. VERIFY SYSTEM:
+   Dashboard tab → Check system health
+   All should be green (except Firebase if not configured)
+
+================================================================================
+BACKUP YOUR .ENV FILE
+================================================================================
+
+After configuration, backup your .env file:
+
+  # Local backup
+  cp /home/pi/accessctl/.env /home/pi/accessctl/.env.backup
+  
+  # Backup to USB (if mounted)
+  cp /home/pi/accessctl/.env /media/usb/access-control-env-backup.txt
+  
+  # Backup to another machine (from your PC)
+  scp pi@YOUR_PI_IP:/home/pi/accessctl/.env ./env-backup-$(date +%Y%m%d).txt
+
+⚠️ Keep backup in secure location (contains credentials!)
+
+================================================================================
+UPDATING CONFIGURATION
+================================================================================
+
+Most settings can be changed via web interface (no .env edit needed):
+
+VIA WEB INTERFACE (Configuration Tab):
+  ✓ Wiegand bit format
+  ✓ Tag re-detect delay
+  ✓ Entry/Exit tracking
+  ✓ Entity ID
+  ✓ Scan delay
+  ✓ Admin password
+  ✓ API key
+
+REQUIRES .ENV EDIT + RESTART:
+  • GPIO pin numbers
+  • Flask host/port
+  • Storage limits
+  • Log file location
+  • Firebase credential file path
+
+TO EDIT .ENV:
+  1. nano /home/pi/accessctl/.env
+  2. Make changes
+  3. Save (Ctrl+O, Enter, Ctrl+X)
+  4. Restart: sudo systemctl restart access-control
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+❌ Using default admin123 password in production
+✅ Generate strong password and hash
+
+❌ Using API_KEY="your-api-key-change-this"
+✅ Generate random 32+ character key
+
+❌ Forgetting to update API key in browser
+✅ Visit /setup page after changing API_KEY
+
+❌ Setting FLASK_DEBUG=true in production
+✅ Always false for security
+
+❌ Wrong GPIO pin numbers
+✅ Verify with gpio readall
+
+❌ Wrong Wiegand bit format
+✅ Test both 26 and 34 if unsure
+
+❌ No backup of .env file
+✅ Keep secure backup
+
+================================================================================
+
+✅ ENV FILE TEMPLATE PROVIDED!
+
+Use env.template to create your .env file with proper security settings.
+
+================================================================================
+

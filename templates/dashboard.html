@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Control Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Access Control</h2>
+                <p id="userDisplay"></p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-tab="transactions">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Transactions</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-tab="users">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Users</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-tab="analytics">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-tab="relays">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Relay Control</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-tab="config">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m-8-8h6m6 0h6"></path>
+                        <path d="M17.8 4.2l-4.2 4.2m-3.2 0L6.2 4.2m11.6 15.6l-4.2-4.2m-3.2 0l-4.2 4.2"></path>
+                    </svg>
+                    <span>Configuration</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="btn btn-secondary btn-block" id="logoutBtn">Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="dashboardTab">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <div class="status-badge" id="systemStatus">
+                        <span class="status-dot"></span>
+                        <span>System Online</span>
+                    </div>
+                </div>
+
+                <!-- System Health Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #4CAF50;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Internet</h3>
+                            <p id="internetStatus">Checking...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FF9800;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Firebase</h3>
+                            <p id="firebaseStatus">Checking...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #2196F3;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>RFID Readers</h3>
+                            <p id="rfidStatus">Checking...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #9C27B0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Storage</h3>
+                            <p id="storageStatus">Checking...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #E91E63;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <h3>CPU Temperature</h3>
+                            <p id="temperatureStatus">Checking...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Stats -->
+                <div class="section">
+                    <h2>Today's Activity</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card mini">
+                            <h4>Total Scans</h4>
+                            <div class="stat-number" id="totalScans">0</div>
+                        </div>
+                        <div class="stat-card mini success">
+                            <h4>Access Granted</h4>
+                            <div class="stat-number" id="grantedScans">0</div>
+                        </div>
+                        <div class="stat-card mini danger">
+                            <h4>Access Denied</h4>
+                            <div class="stat-number" id="deniedScans">0</div>
+                        </div>
+                        <div class="stat-card mini warning">
+                            <h4>Blocked</h4>
+                            <div class="stat-number" id="blockedScans">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Transactions -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Live Transactions</h2>
+                        <span class="live-indicator">
+                            <span class="pulse"></span>
+                            Live
+                        </span>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Name</th>
+                                    <th>Card</th>
+                                    <th>Reader</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="liveTransactions">
+                                <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-controls" id="livePaginationControls" style="display: none;">
+                        <button class="btn btn-secondary" id="prevPageBtn" disabled>Previous</button>
+                        <span id="pageInfo">Page 1 of 1</span>
+                        <button class="btn btn-secondary" id="nextPageBtn" disabled>Next</button>
+                        <select id="itemsPerPage" class="form-control" style="width: auto; display: inline-block; margin-left: 15px;">
+                            <option value="10">10 per page</option>
+                            <option value="25" selected>25 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div class="tab-content" id="transactionsTab">
+                <div class="page-header">
+                    <h1>Transaction History</h1>
+                    <button class="btn btn-primary" id="downloadCsvBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download CSV
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <div class="form-group inline">
+                        <label>Show:</label>
+                        <select id="txLimit">
+                            <option value="50">50 records</option>
+                            <option value="100">100 records</option>
+                            <option value="200">200 records</option>
+                            <option value="500">500 records</option>
+                        </select>
+                    </div>
+                    <div class="form-group inline">
+                        <input type="text" id="txSearch" placeholder="Search by name or card...">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Name</th>
+                                <th>Card Number</th>
+                                <th>Reader</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTable">
+                            <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-content" id="usersTab">
+                <div class="page-header">
+                    <h1>User Management</h1>
+                    <button class="btn btn-primary" id="addUserBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add User
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <div class="form-group">
+                        <input type="text" id="userSearch" placeholder="Search by name or card number...">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Card Number</th>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Privacy</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-content" id="analyticsTab">
+                <div class="page-header">
+                    <h1>📊 Advanced Analytics & Reports</h1>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="analyticsMode" class="form-control" style="width: auto;">
+                            <option value="all">System Overview</option>
+                            <option value="user">User Report</option>
+                        </select>
+                        <select id="analyticsPeriod" class="form-control" style="width: auto;">
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="60">Last 60 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                        <button class="btn btn-primary" id="refreshAnalyticsBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Overview Mode -->
+                <div id="systemAnalytics" style="display: block;">
+                    <!-- Summary Cards -->
+                    <div class="stats-grid" style="margin-bottom: 30px;">
+                        <div class="stat-card mini">
+                            <h4>Total Transactions</h4>
+                            <div class="stat-number" id="analyticsTotal">0</div>
+                        </div>
+                        <div class="stat-card mini success">
+                            <h4>Success Rate</h4>
+                            <div class="stat-number" id="analyticsSuccessRate">0%</div>
+                        </div>
+                        <div class="stat-card mini">
+                            <h4>Unique Users</h4>
+                            <div class="stat-number" id="analyticsUniqueUsers">0</div>
+                        </div>
+                        <div class="stat-card mini">
+                            <h4>Avg Per Day</h4>
+                            <div class="stat-number" id="analyticsAvgPerDay">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 1 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="card">
+                            <h3>📈 Hourly Distribution</h3>
+                            <div id="hourlyChart" class="chart-container"></div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>🎯 Status Breakdown</h3>
+                            <div id="statusChart" class="chart-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 2 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <div class="card">
+                            <h3>🚪 Reader Usage</h3>
+                            <div id="readerChart" class="chart-container"></div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>📅 Daily Trend</h3>
+                            <div id="dailyChart" class="chart-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- Top Users Table -->
+                    <div class="card">
+                        <h3>👥 Top 10 Most Active Users</h3>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Card Number</th>
+                                        <th>Access Count</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topUsersTable">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Insights -->
+                    <div class="card">
+                        <h3>💡 Key Insights</h3>
+                        <div id="insights" class="insights-grid">
+                            <div class="insight-item">
+                                <strong>Peak Hour:</strong>
+                                <span id="insightPeakHour">-</span>
+                            </div>
+                            <div class="insight-item">
+                                <strong>Busiest Day:</strong>
+                                <span id="insightPeakDay">-</span>
+                            </div>
+                            <div class="insight-item">
+                                <strong>Most Used Reader:</strong>
+                                <span id="insightBusiestReader">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Report Mode -->
+                <div id="userAnalytics" style="display: none;">
+                    <div class="search-section">
+                        <div class="form-group">
+                            <label>Search User by Name or Card Number</label>
+                            <input type="text" id="userReportSearch" placeholder="Enter name or card number...">
+                        </div>
+                        <button class="btn btn-primary" id="userReportSearchBtn">Generate Report</button>
+                    </div>
+
+                    <div id="userReportResults" style="display: none;">
+                        <!-- User Info Card -->
+                        <div class="card">
+                            <h3>👤 User Information</h3>
+                            <div id="userReportInfo" class="user-info-grid"></div>
+                        </div>
+
+                        <!-- User Summary -->
+                        <div class="stats-grid">
+                            <div class="stat-card mini">
+                                <h4>Total Accesses</h4>
+                                <div class="stat-number" id="userTotalAccess">0</div>
+                            </div>
+                            <div class="stat-card mini success">
+                                <h4>Granted</h4>
+                                <div class="stat-number" id="userGranted">0</div>
+                            </div>
+                            <div class="stat-card mini danger">
+                                <h4>Denied</h4>
+                                <div class="stat-number" id="userDenied">0</div>
+                            </div>
+                            <div class="stat-card mini">
+                                <h4>Avg/Day</h4>
+                                <div class="stat-number" id="userAvgPerDay">0</div>
+                            </div>
+                        </div>
+
+                        <!-- User Charts -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <div class="card">
+                                <h3>🕐 Hourly Pattern</h3>
+                                <div id="userHourlyChart" class="chart-container"></div>
+                            </div>
+                            
+                            <div class="card">
+                                <h3>🚪 Reader Preference</h3>
+                                <div id="userReaderChart" class="chart-container"></div>
+                            </div>
+                        </div>
+
+                        <!-- User Patterns -->
+                        <div class="card">
+                            <h3>📊 Access Patterns</h3>
+                            <div class="insights-grid">
+                                <div class="insight-item">
+                                    <strong>Favorite Hour:</strong>
+                                    <span id="userFavoriteHour">-</span>
+                                </div>
+                                <div class="insight-item">
+                                    <strong>Most Used Reader:</strong>
+                                    <span id="userMostUsedReader">-</span>
+                                </div>
+                                <div class="insight-item">
+                                    <strong>First Access:</strong>
+                                    <span id="userFirstAccess">-</span>
+                                </div>
+                                <div class="insight-item">
+                                    <strong>Last Access:</strong>
+                                    <span id="userLastAccess">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="card">
+                            <h3>📝 Recent Activity (Last 20)</h3>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Reader</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userTimelineTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userReportEmpty" class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <p>Enter a name or card number to generate user report</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relay Control Tab -->
+            <div class="tab-content" id="relaysTab">
+                <div class="page-header">
+                    <h1>Relay Control</h1>
+                </div>
+
+                <div class="relay-grid">
+                    <div class="relay-card">
+                        <h3>Relay 1</h3>
+                        <p>Main Entrance</p>
+                        <div class="relay-actions">
+                            <button class="btn btn-success btn-block" onclick="controlRelay(1, 'normal')">Pulse (1s)</button>
+                            <button class="btn btn-warning btn-block" onclick="controlRelay(1, 'open_hold')">Open & Hold</button>
+                            <button class="btn btn-danger btn-block" onclick="controlRelay(1, 'close_hold')">Close & Hold</button>
+                        </div>
+                    </div>
+
+                    <div class="relay-card">
+                        <h3>Relay 2</h3>
+                        <p>Secondary Door</p>
+                        <div class="relay-actions">
+                            <button class="btn btn-success btn-block" onclick="controlRelay(2, 'normal')">Pulse (1s)</button>
+                            <button class="btn btn-warning btn-block" onclick="controlRelay(2, 'open_hold')">Open & Hold</button>
+                            <button class="btn btn-danger btn-block" onclick="controlRelay(2, 'close_hold')">Close & Hold</button>
+                        </div>
+                    </div>
+
+                    <div class="relay-card">
+                        <h3>Relay 3</h3>
+                        <p>Auxiliary</p>
+                        <div class="relay-actions">
+                            <button class="btn btn-success btn-block" onclick="controlRelay(3, 'normal')">Pulse (1s)</button>
+                            <button class="btn btn-warning btn-block" onclick="controlRelay(3, 'open_hold')">Open & Hold</button>
+                            <button class="btn btn-danger btn-block" onclick="controlRelay(3, 'close_hold')">Close & Hold</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Tab -->
+            <div class="tab-content" id="configTab">
+                <div class="page-header">
+                    <h1>System Configuration</h1>
+                </div>
+
+                <div class="card">
+                    <h3>RFID Reader Configuration</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Configure the Wiegand protocol bit format for each RFID reader. Changes take effect immediately and will reinitialize the readers.</p>
+                    
+                    <div class="warning" style="margin-bottom: 20px;">
+                        <strong>⚠️ Important:</strong> Make sure to select the correct bit format (26 or 34) that matches your RFID cards. Incorrect settings will prevent cards from being read properly.
+                    </div>
+
+                    <form id="configForm">
+                        <div class="config-grid">
+                            <div class="config-card">
+                                <h4>Reader 1</h4>
+                                <p>Main Entrance</p>
+                                <div class="form-group">
+                                    <label>Wiegand Bits</label>
+                                    <select id="reader1Bits" class="form-control">
+                                        <option value="26">26-bit (Standard)</option>
+                                        <option value="34">34-bit (Extended)</option>
+                                    </select>
+                                </div>
+                                <div class="reader-status" id="reader1Status">
+                                    <small>Current: <span class="current-bits">-</span> bit</small>
+                                </div>
+                            </div>
+
+                            <div class="config-card">
+                                <h4>Reader 2</h4>
+                                <p>Secondary Door</p>
+                                <div class="form-group">
+                                    <label>Wiegand Bits</label>
+                                    <select id="reader2Bits" class="form-control">
+                                        <option value="26">26-bit (Standard)</option>
+                                        <option value="34">34-bit (Extended)</option>
+                                    </select>
+                                </div>
+                                <div class="reader-status" id="reader2Status">
+                                    <small>Current: <span class="current-bits">-</span> bit</small>
+                                </div>
+                            </div>
+
+                            <div class="config-card">
+                                <h4>Reader 3</h4>
+                                <p>Auxiliary</p>
+                                <div class="form-group">
+                                    <label>Wiegand Bits</label>
+                                    <select id="reader3Bits" class="form-control">
+                                        <option value="26">26-bit (Standard)</option>
+                                        <option value="34">34-bit (Extended)</option>
+                                    </select>
+                                </div>
+                                <div class="reader-status" id="reader3Status">
+                                    <small>Current: <span class="current-bits">-</span> bit</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 30px;">
+                            <button type="submit" class="btn btn-primary" id="saveConfigBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
+                                Save Configuration
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="resetConfigBtn">Reset to Current</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>🔄 Duplicate Prevention & Tracking</h3>
+                    <div class="form-group">
+                        <label>Tag Re-Detect Delay (seconds)</label>
+                        <input type="number" id="scanDelay" min="1" max="300" value="60" class="form-control">
+                        <small style="color: #666;">Minimum time before same card can be scanned again (1-300 seconds, prevents duplicate reads)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="entryExitEnabled" style="width: auto;">
+                            <span>Enable Entry/Exit Tracking</span>
+                        </label>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            When enabled, transactions are only created if the time gap between card scans satisfies the minimum delay
+                        </small>
+                    </div>
+                    
+                    <div class="form-group" id="entryExitGapGroup" style="display: none; margin-left: 30px;">
+                        <label>Minimum Entry/Exit Gap (seconds)</label>
+                        <input type="number" id="entryExitGap" min="1" max="300" value="300" class="form-control">
+                        <small style="color: #666;">
+                            Time gap required between entry and exit to create a transaction (1-300 seconds, default: 300s = 5 minutes)
+                        </small>
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" id="saveTrackingBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Tracking Settings
+                        </button>
+                    </div>
+                    
+                    <div class="info" style="margin-top: 15px;">
+                        <strong>ℹ️ Entry/Exit Tracking:</strong><br>
+                        When enabled, the system tracks each card's last scan. A transaction is only created when:
+                        <ul style="margin: 10px 0 0 20px; padding: 0;">
+                            <li>The card is scanned for the first time (no transaction yet)</li>
+                            <li>The time since last scan exceeds the minimum gap (transaction created)</li>
+                        </ul>
+                        This prevents duplicate transactions when someone stays in the area and triggers the reader multiple times.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🌐 Entity Configuration</h3>
+                    <div class="form-group">
+                        <label>Entity ID (Firebase)</label>
+                        <input type="text" id="entityId" placeholder="default_entity" class="form-control">
+                        <small style="color: #666;">Entity identifier for Firebase cloud sync (change if using multiple sites)</small>
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" id="saveEntityBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Entity ID
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🕐 System Time Configuration</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Configure system time for accurate transaction logging. The Pi Zero 2W doesn't have a real-time clock, so time may reset on power loss.</p>
+                    
+                    <div class="warning" style="margin-bottom: 20px;">
+                        <strong>⚠️ Important:</strong> Setting system time requires sudo permissions. Ensure the service has proper permissions configured.
+                    </div>
+
+                    <div class="time-display-section" style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <label style="font-weight: 600; color: #333; display: block; margin-bottom: 8px;">System Time</label>
+                                <div id="systemTimeDisplay" style="font-size: 24px; font-weight: 700; color: #2196F3; font-family: monospace;">
+                                    Loading...
+                                </div>
+                                <small id="systemTimezone" style="color: #666; display: block; margin-top: 4px;">Timezone: -</small>
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; color: #333; display: block; margin-bottom: 8px;">Your PC Time</label>
+                                <div id="browserTimeDisplay" style="font-size: 24px; font-weight: 700; color: #4CAF50; font-family: monospace;">
+                                    --:--:--
+                                </div>
+                                <small id="browserTimezone" style="color: #666; display: block; margin-top: 4px;">Timezone: -</small>
+                            </div>
+                        </div>
+                        
+                        <div id="timeDifferenceAlert" style="display: none; margin-top: 15px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                            <strong>⚠️ Time Mismatch:</strong> System time differs from your PC by <span id="timeDifference"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quick Actions</label>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" id="syncWithPcBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                </svg>
+                                Sync with PC Time
+                            </button>
+                            <button type="button" class="btn btn-success" id="enableNtpBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Enable NTP Sync
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="refreshTimeBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Manual Time Setting</label>
+                        <div style="display: flex; gap: 10px; align-items: end;">
+                            <div style="flex: 1;">
+                                <input type="datetime-local" id="manualTimeInput" class="form-control">
+                                <small style="color: #666;">Enter date and time to set manually</small>
+                            </div>
+                            <button type="button" class="btn btn-warning" id="setManualTimeBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Set Time
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="info" style="margin-top: 15px;">
+                        <strong>ℹ️ About Time Synchronization:</strong><br>
+                        <strong>Sync with PC:</strong> Sets the system time to match your computer's current time (recommended for initial setup)<br>
+                        <strong>Enable NTP:</strong> Enables automatic internet time synchronization (requires internet connection)<br>
+                        <strong>Manual Setting:</strong> Set a specific date and time manually<br><br>
+                        <strong>Note:</strong> After setting time, you may need to reload the page to see updated timestamps in transactions.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚙️ Advanced RFID Settings</h3>
+                    <div class="form-group">
+                        <label>Wiegand Timeout (milliseconds)</label>
+                        <input type="number" id="wiegandTimeout" min="10" max="100" value="25" class="form-control">
+                        <small style="color: #666;">Maximum time between bits before resetting (advanced users only)</small>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔒 Security Settings</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Change admin password and API key. After changing, you'll need to update your saved credentials.</p>
+                    
+                    <div class="warning" style="margin-bottom: 20px;">
+                        <strong>⚠️ Important:</strong> After changing the API key, you must update it in your browser localStorage. Use the /setup page or run: <code>setApiKey('new-key')</code>
+                    </div>
+
+                    <form id="securityForm">
+                        <div class="form-group">
+                            <label>New Admin Password (leave blank to keep current)</label>
+                            <input type="password" id="newPassword" placeholder="Minimum 8 characters" class="form-control" autocomplete="new-password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" id="confirmPassword" placeholder="Re-enter password" class="form-control" autocomplete="new-password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>New API Key (leave blank to keep current)</label>
+                            <input type="text" id="newApiKey" placeholder="Minimum 16 characters" class="form-control">
+                        </div>
+                        
+                        <div class="form-actions" style="margin-top: 20px;">
+                            <button type="submit" class="btn btn-danger" id="updateSecurityBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                Update Security Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="info" style="margin-top: 20px;">
+                    <strong>ℹ️ About Wiegand Formats:</strong><br>
+                    <strong>26-bit:</strong> Standard format used by most proximity cards (125kHz). Supports 8-bit facility code and 16-bit card number.<br>
+                    <strong>34-bit:</strong> Extended format for larger installations. Supports 16-bit facility code and 16-bit card number.<br><br>
+                    Check your card manufacturer's specifications or test both formats to determine which one your cards use.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="newUserName" required>
+                </div>
+                <div class="form-group">
+                    <label>Card Number *</label>
+                    <input type="text" id="newUserCard" required>
+                </div>
+                <div class="form-group">
+                    <label>User ID *</label>
+                    <input type="text" id="newUserId" required>
+                </div>
+                <div class="form-group">
+                    <label>Reference ID</label>
+                    <input type="text" id="newUserRefId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Privacy Protection Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔒 Privacy Protection</h2>
+                <button class="close-btn" onclick="closePrivacyModal()">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="warning" style="margin-bottom: 20px;">
+                    <strong>⚠️ Important:</strong> Enabling privacy protection will prevent this user's transactions from being logged. They will still have access, but no records will be saved.
+                </div>
+                
+                <div id="privacyUserInfo" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                    <strong>User:</strong> <span id="privacyUserName"></span><br>
+                    <strong>Card:</strong> <span id="privacyUserCard"></span><br>
+                    <strong>Action:</strong> <span id="privacyAction"></span>
+                </div>
+                
+                <form id="privacyForm">
+                    <div class="form-group">
+                        <label>Admin Password (Required) *</label>
+                        <input type="password" id="privacyPassword" required autocomplete="current-password" placeholder="Enter your admin password">
+                        <small style="color: #666;">Password verification required for privacy changes</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closePrivacyModal()">Cancel</button>
+                        <button type="submit" class="btn btn-danger" id="confirmPrivacyBtn">Confirm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
+
