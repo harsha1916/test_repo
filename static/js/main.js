@@ -4,11 +4,17 @@ const API_BASE = window.location.origin;
 
 // Auth headers
 function getHeaders() {
-    return {
-        'Content-Type': 'application/json',
-        'X-API-Key': API_KEY,
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    const headers = {
+        'Content-Type': 'application/json'
     };
+    
+    // Add Bearer token if available
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
 }
 
 // Check authentication on page load
@@ -1062,16 +1068,10 @@ async function saveEntitySettings() {
 async function saveConfiguration() {
     // Check authentication before attempting save
     const token = localStorage.getItem('authToken');
-    const apiKey = localStorage.getItem('apiKey') || API_KEY;
     
     if (!token) {
         showNotification('Please login first', 'error');
         window.location.href = '/login';
-        return;
-    }
-    
-    if (!apiKey || apiKey === 'your-api-key-change-this') {
-        showNotification('API key not configured. Please set it in localStorage or use the setup page.', 'error');
         return;
     }
     
@@ -1128,7 +1128,6 @@ async function saveConfiguration() {
 async function updateSecuritySettings() {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-    const newApiKey = document.getElementById('newApiKey').value;
     
     // Validate passwords match if provided
     if (newPassword && newPassword !== confirmPassword) {
@@ -1136,14 +1135,14 @@ async function updateSecuritySettings() {
         return;
     }
     
-    // Check if at least one field is provided
-    if (!newPassword && !newApiKey) {
-        showNotification('Please enter a new password or API key', 'error');
+    // Check if password is provided
+    if (!newPassword) {
+        showNotification('Please enter a new password', 'error');
         return;
     }
     
     // Confirm security change
-    if (!confirm('Are you sure you want to update security settings? You will need to update your saved credentials.')) {
+    if (!confirm('Are you sure you want to update your password? You will need to login again with the new password.')) {
         return;
     }
     
@@ -1154,7 +1153,6 @@ async function updateSecuritySettings() {
     
     const data = {};
     if (newPassword) data.new_password = newPassword;
-    if (newApiKey) data.new_api_key = newApiKey;
     
     const result = await apiCall('/update_security', {
         method: 'POST',
@@ -1165,37 +1163,32 @@ async function updateSecuritySettings() {
     updateBtn.innerHTML = originalText;
     
     if (result && result.ok) {
-        showNotification(result.data.message || 'Security settings updated!', 'success');
+        showNotification(result.data.message || 'Password updated successfully!', 'success');
         
         // Clear form
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
-        document.getElementById('newApiKey').value = '';
         
-        // If API key changed, show reminder
-        if (newApiKey) {
-            setTimeout(() => {
-                alert('IMPORTANT: Update your API key in localStorage!\n\n1. Press F12\n2. Console tab\n3. Run: setApiKey(\'' + newApiKey + '\')');
-            }, 500);
-        }
+        // Prompt to login again
+        setTimeout(() => {
+            if (confirm('Password updated! You need to login again with your new password.')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('username');
+                window.location.href = '/login';
+            }
+        }, 500);
     } else {
-        showNotification(result?.data?.message || 'Failed to update security settings', 'error');
+        showNotification(result?.data?.message || 'Failed to update password', 'error');
     }
 }
 
 async function saveAuthSettings() {
     // Check authentication before attempting save
     const token = localStorage.getItem('authToken');
-    const apiKey = localStorage.getItem('apiKey') || API_KEY;
     
     if (!token) {
         showNotification('Please login first', 'error');
         window.location.href = '/login';
-        return;
-    }
-    
-    if (!apiKey || apiKey === 'your-api-key-change-this') {
-        showNotification('API key not configured. Please set it in localStorage or use the setup page.', 'error');
         return;
     }
     

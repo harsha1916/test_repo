@@ -1,18 +1,18 @@
 from api_accesss import AccessControlAPI
 
 # ============================================
-# Method 1: Token-based authentication (original)
+# Method 1: Token-based authentication
 # ============================================
-api = AccessControlAPI("https://residential_tirumala_zero.easyslot.in", "your-api-key-change-this")
+# API key is no longer required - just use token-based auth
+api = AccessControlAPI("https://residential_tirumala_zero.easyslot.in")
 api.login("admin", "admin123")
 
 # ============================================
-# Method 2: Basic HTTP authentication (NEW)
+# Method 2: Basic HTTP authentication
 # ============================================
 # You can use Basic Auth instead - no login required!
 # api = AccessControlAPI(
 #     "https://residential_tirumala_zero.easyslot.in",
-#     api_key="your-api-key-change-this",  # Optional when using Basic Auth
 #     use_basic_auth=True,
 #     username="admin",
 #     password="admin123"

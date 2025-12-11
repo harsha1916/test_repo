@@ -845,44 +845,22 @@ def require_auth(f):
     return _w
 
 def require_api_key(f):
+    """DEPRECATED: Use require_auth instead. Kept for backward compatibility."""
     @wraps(f)
     def _w(*a,**k):
-        # Check API key in header
-        api_key = request.headers.get('X-API-Key')
-        if api_key == API_KEY:
-            return f(*a,**k)
-        
-        # Also accept Basic Auth as API key alternative
-        if check_basic_auth():
-            return f(*a,**k)
-        
-        return jsonify({"status":"error","message":"Invalid API key"}), 401
+        # Just require authentication (token or Basic Auth)
+        if not is_authenticated():
+            return jsonify({"status":"error","message":"Authentication required"}), 401
+        return f(*a,**k)
     return _w
 
 def require_both(f):
-    """CHANGED: Defense-in-depth for mutating routes (API key + session).
-    Now supports Basic Auth as alternative to both API key and token."""
+    """Require authentication (token or Basic Auth). API key no longer required."""
     @wraps(f)
     def _w(*a,**k):
-        # If Basic Auth is provided, it satisfies both requirements
-        if check_basic_auth():
-            return f(*a,**k)
-        
-        # Otherwise, require both API key and token
-        api_key = request.headers.get('X-API-Key')
-        auth_header = request.headers.get('Authorization', '')
-        
-        # Check API key first
-        if not api_key:
-            logging.warning(f"API key missing for {request.path}")
-            return jsonify({"status":"error","message":"API key required"}), 401
-        
-        if api_key != API_KEY:
-            logging.warning(f"Invalid API key for {request.path}")
-            return jsonify({"status":"error","message":"Invalid API key"}), 401
-        
         # Check authentication (token or Basic Auth)
         if not is_authenticated():
+            auth_header = request.headers.get('Authorization', '')
             # Provide more specific error message
             if not auth_header:
                 logging.warning(f"Authentication header missing for {request.path}")

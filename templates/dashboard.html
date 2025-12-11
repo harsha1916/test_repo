@@ -797,12 +797,8 @@
 
                 <div class="card">
                     <h3>🔒 Security Settings</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Change admin password and API key. After changing, you'll need to update your saved credentials.</p>
+                    <p style="color: #666; margin-bottom: 20px;">Change admin password. API key authentication has been removed - authentication now uses tokens or Basic Auth only.</p>
                     
-                    <div class="warning" style="margin-bottom: 20px;">
-                        <strong>⚠️ Important:</strong> After changing the API key, you must update it in your browser localStorage. Use the /setup page or run: <code>setApiKey('new-key')</code>
-                    </div>
-
                     <form id="securityForm">
                         <div class="form-group">
                             <label>New Admin Password (leave blank to keep current)</label>
@@ -814,9 +810,10 @@
                             <input type="password" id="confirmPassword" placeholder="Re-enter password" class="form-control" autocomplete="new-password">
                         </div>
                         
-                        <div class="form-group">
-                            <label>New API Key (leave blank to keep current)</label>
-                            <input type="text" id="newApiKey" placeholder="Minimum 16 characters" class="form-control">
+                        <div class="form-group" style="display: none;">
+                            <label>New API Key (deprecated - no longer used for authentication)</label>
+                            <input type="text" id="newApiKey" placeholder="Deprecated" class="form-control" disabled>
+                            <small style="color: #999;">API key authentication has been removed. This field is kept for backward compatibility only.</small>
                         </div>
                         
                         <div class="form-actions" style="margin-top: 20px;">

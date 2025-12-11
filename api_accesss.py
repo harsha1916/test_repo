@@ -11,21 +11,21 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class AccessControlAPI:
     """Complete Python API client for Pi Zero Access Control System"""
 
-    def __init__(self, base_url: str, api_key: str, verify_ssl: bool = False, 
+    def __init__(self, base_url: str, api_key: str = None, verify_ssl: bool = False, 
                  use_basic_auth: bool = False, username: str = None, password: str = None):
         """
         Initialize the API client.
 
         Args:
             base_url: Base URL (e.g., 'https://residential_tirumala_zero.easyslot.in')
-            api_key: Your API key (can be None if using Basic Auth)
+            api_key: DEPRECATED - API key no longer required for authentication (kept for backward compatibility)
             verify_ssl: Set to False for Cloudflare issues (default: False)
             use_basic_auth: If True, use Basic HTTP authentication instead of token-based
             username: Username for Basic Auth (required if use_basic_auth=True)
             password: Password for Basic Auth (required if use_basic_auth=True)
         """
         self.base_url = base_url.rstrip('/')
-        self.api_key = api_key
+        self.api_key = api_key  # Kept for backward compatibility but not used
         self.verify_ssl = verify_ssl
         self.token = None
         self.session = requests.Session()
@@ -43,18 +43,15 @@ class AccessControlAPI:
             "Content-Type": "application/json"
         }
         
-        # Add API key or Basic Auth header
+        # Add Basic Auth header if using Basic Auth
         if self.use_basic_auth and self.basic_auth_username and self.basic_auth_password:
             # Basic Auth is handled by session.auth, but we can also add it to headers
             credentials = f"{self.basic_auth_username}:{self.basic_auth_password}"
             encoded = base64.b64encode(credentials.encode()).decode()
             headers["Authorization"] = f"Basic {encoded}"
-        else:
-            # Use API key and token
-            if self.api_key:
-                headers["X-API-Key"] = self.api_key
-            if self.token:
-                headers["Authorization"] = f"Bearer {self.token}"
+        elif self.token:
+            # Use Bearer token
+            headers["Authorization"] = f"Bearer {self.token}"
         
         return headers
 
