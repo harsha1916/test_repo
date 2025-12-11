@@ -575,4 +575,3 @@ def force_retry():
 
 All offline transactions will now automatically upload when internet is restored!
 
-

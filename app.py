@@ -25,7 +25,7 @@ except Exception:
 # Env & constants
 # =========================
 load_dotenv()
-BASE_DIR   = os.environ.get('BASE_DIR', '/home/pi/accessctl')
+BASE_DIR   = os.environ.get('BASE_DIR', '/home/maxpark')
 os.makedirs(BASE_DIR, exist_ok=True)
 
 # File paths
@@ -198,7 +198,8 @@ def get_config():
                 "enabled": False,
                 "min_gap_seconds": 300  # 5 minutes default
             },
-            "entity_id": os.environ.get('ENTITY_ID', 'default_entity')
+            "entity_id": os.environ.get('ENTITY_ID', 'default_entity'),
+            "basic_auth_enabled": bool(os.environ.get('BASIC_AUTH_ENABLED', 'true').lower() == 'true')  # Default: enabled
         }
         config = read_json_or_default(CONFIG_FILE, default_config)
         # Ensure all keys exist
@@ -212,6 +213,8 @@ def get_config():
             config["entry_exit_tracking"] = default_config["entry_exit_tracking"]
         if "entity_id" not in config:
             config["entity_id"] = default_config["entity_id"]
+        if "basic_auth_enabled" not in config:
+            config["basic_auth_enabled"] = default_config["basic_auth_enabled"]
         return config
 
 def save_config(new_config):
@@ -750,34 +753,81 @@ def cleanup_expired_sessions():
             active_sessions.pop(t, None)
 
 def check_basic_auth():
-    """Check HTTP Basic Authentication credentials."""
-    auth_header = request.headers.get('Authorization', '')
-    if not auth_header.startswith('Basic '):
+    """Check Basic HTTP authentication credentials."""
+    # Check if Basic Auth is enabled in configuration
+    config = get_config()
+    if not config.get("basic_auth_enabled", True):
         return False
-    try:
-        # Extract and decode base64 credentials
-        encoded = auth_header.replace('Basic ', '', 1)
-        decoded = base64.b64decode(encoded).decode('utf-8')
-        username, password = decoded.split(':', 1)
-        # Verify credentials
+    
+    auth_header = request.headers.get('Authorization', '')
+    
+    # Check for Basic Auth in header
+    if auth_header.startswith('Basic '):
+        try:
+            # Decode base64 credentials
+            encoded = auth_header.replace('Basic ', '')
+            decoded = base64.b64decode(encoded).decode('utf-8')
+            username, password = decoded.split(':', 1)
+            
+            # Verify credentials
+            if username == ADMIN_USERNAME and verify_password(password, ADMIN_PASSWORD_HASH):
+                return True
+        except Exception as e:
+            logging.debug(f"Basic auth decode error: {e}")
+            return False
+    
+    # Check for Basic Auth in URL (username:password@host)
+    if request.authorization:
+        username = request.authorization.username
+        password = request.authorization.password
         if username == ADMIN_USERNAME and verify_password(password, ADMIN_PASSWORD_HASH):
-            logging.debug(f"Basic Auth successful for user: {username}")
             return True
-        else:
-            logging.warning(f"Basic Auth failed: invalid credentials for user: {username}")
-    except Exception as e:
-        logging.error(f"Basic Auth decode error: {e}")
+    
     return False
 
+def get_current_username():
+    """Get the current authenticated username from token or Basic Auth."""
+    auth_header = request.headers.get('Authorization', '')
+    
+    # Check token-based authentication (Bearer token)
+    if auth_header.startswith('Bearer '):
+        token = auth_header.replace('Bearer ', '')
+        with SESS_LOCK:
+            if token and token in active_sessions:
+                return active_sessions[token].get('username', 'unknown')
+    
+    # Check Basic HTTP authentication
+    if check_basic_auth():
+        # Extract username from Basic Auth
+        if auth_header.startswith('Basic '):
+            try:
+                encoded = auth_header.replace('Basic ', '')
+                decoded = base64.b64decode(encoded).decode('utf-8')
+                username, _ = decoded.split(':', 1)
+                return username
+            except:
+                pass
+        elif request.authorization:
+            return request.authorization.username
+    
+    return None
+
 def is_authenticated():
-    """Check if request is authenticated via token OR Basic Auth."""
-    # Check Basic Auth first
+    """Check if request is authenticated via token or Basic Auth."""
+    auth_header = request.headers.get('Authorization', '')
+    
+    # Check token-based authentication (Bearer token)
+    if auth_header.startswith('Bearer '):
+        token = auth_header.replace('Bearer ', '')
+        with SESS_LOCK:
+            if token and token in active_sessions:
+                return True
+    
+    # Check Basic HTTP authentication
     if check_basic_auth():
         return True
-    # Check token auth (for UI compatibility)
-    token = request.headers.get('Authorization','').replace('Bearer ','')
-    with SESS_LOCK:
-        return token in active_sessions
+    
+    return False
 
 def require_auth(f):
     @wraps(f)
@@ -788,36 +838,37 @@ def require_auth(f):
     return _w
 
 def require_api_key(f):
-    """Accept either X-API-Key header OR Basic Auth."""
     @wraps(f)
     def _w(*a,**k):
-        # Check Basic Auth (username:password)
+        # Check API key in header
+        api_key = request.headers.get('X-API-Key')
+        if api_key == API_KEY:
+            return f(*a,**k)
+        
+        # Also accept Basic Auth as API key alternative
         if check_basic_auth():
             return f(*a,**k)
-        # Check API key header
-        if request.headers.get('X-API-Key') != API_KEY:
-            return jsonify({"status":"error","message":"Invalid API key"}), 401
-        return f(*a,**k)
+        
+        return jsonify({"status":"error","message":"Invalid API key"}), 401
     return _w
 
 def require_both(f):
-    """Defense-in-depth: Accept Basic Auth OR (API key + token).
-    
-    For UI: requires token + API key
-    For API clients: Basic Auth (username:password) is sufficient
-    """
+    """CHANGED: Defense-in-depth for mutating routes (API key + session).
+    Now supports Basic Auth as alternative to both API key and token."""
     @wraps(f)
     def _w(*a,**k):
-        # Basic Auth bypasses both checks (username:password is enough)
+        # If Basic Auth is provided, it satisfies both requirements
         if check_basic_auth():
             return f(*a,**k)
-        # For token-based auth, require both API key and token
-        if request.headers.get('X-API-Key') != API_KEY:
+        
+        # Otherwise, require both API key and token
+        api_key = request.headers.get('X-API-Key')
+        if api_key != API_KEY:
             return jsonify({"status":"error","message":"Invalid API key"}), 401
-        token = request.headers.get('Authorization','').replace('Bearer ','')
-        with SESS_LOCK:
-            if token not in active_sessions:
-                return jsonify({"status":"error","message":"Authentication required"}), 401
+        
+        if not is_authenticated():
+            return jsonify({"status":"error","message":"Authentication required"}), 401
+        
         return f(*a,**k)
     return _w
 
@@ -856,33 +907,17 @@ def login():
 @app.route("/logout", methods=["POST"])
 @require_auth
 def logout():
-    token = request.headers.get('Authorization','').replace('Bearer ','')
-    with SESS_LOCK:
-        active_sessions.pop(token, None)
-    return jsonify({"status":"success"})
-
-@app.route("/test_auth")
-def test_auth():
-    """Test endpoint to verify authentication methods."""
-    basic_auth_works = check_basic_auth()
-    token_auth_works = False
-    token = request.headers.get('Authorization','').replace('Bearer ','')
-    if token:
+    """Logout - invalidate token if using token-based auth."""
+    auth_header = request.headers.get('Authorization','')
+    
+    # Only try to remove token if using Bearer token
+    if auth_header.startswith('Bearer '):
+        token = auth_header.replace('Bearer ','')
         with SESS_LOCK:
-            token_auth_works = token in active_sessions
+            active_sessions.pop(token, None)
     
-    auth_header = request.headers.get('Authorization', '')
-    
-    return jsonify({
-        "status": "info",
-        "basic_auth_detected": auth_header.startswith('Basic '),
-        "basic_auth_works": basic_auth_works,
-        "token_auth_detected": auth_header.startswith('Bearer '),
-        "token_auth_works": token_auth_works,
-        "is_authenticated": is_authenticated(),
-        "auth_header_preview": auth_header[:20] + "..." if len(auth_header) > 20 else auth_header,
-        "admin_username": ADMIN_USERNAME
-    })
+    # For Basic Auth, no session to invalidate (stateless)
+    return jsonify({"status":"success"})
 
 @app.route("/status")
 def status():
@@ -1377,7 +1412,8 @@ def set_system_time():
             )
             
             if result.returncode == 0:
-                logging.warning(f"System time updated to {time_str} by {active_sessions.get(request.headers.get('Authorization','').replace('Bearer ',''), {}).get('username', 'unknown')}")
+                username = get_current_username() or 'unknown'
+                logging.warning(f"System time updated to {time_str} by {username}")
                 return jsonify({
                     "status": "success",
                     "message": f"System time set to {time_str}",
@@ -1393,7 +1429,8 @@ def set_system_time():
                 )
                 
                 if result.returncode == 0:
-                    logging.warning(f"System time updated to {time_str} (via date) by {active_sessions.get(request.headers.get('Authorization','').replace('Bearer ',''), {}).get('username', 'unknown')}")
+                    username = get_current_username() or 'unknown'
+                    logging.warning(f"System time updated to {time_str} (via date) by {username}")
                     return jsonify({
                         "status": "success",
                         "message": f"System time set to {time_str}",
@@ -1436,7 +1473,8 @@ def enable_ntp():
         
         if result.returncode == 0:
             action = "enabled" if enable else "disabled"
-            logging.warning(f"NTP time sync {action} by {active_sessions.get(request.headers.get('Authorization','').replace('Bearer ',''), {}).get('username', 'unknown')}")
+            username = get_current_username() or 'unknown'
+            logging.warning(f"NTP time sync {action} by {username}")
             return jsonify({
                 "status": "success",
                 "message": f"NTP time synchronization {action}"
@@ -1511,6 +1549,11 @@ def update_config_route():
             ENTITY_ID = new_config["entity_id"]
             logging.info(f"Entity ID updated to: {ENTITY_ID}")
         
+        # Update Basic Auth setting if changed
+        if "basic_auth_enabled" in new_config:
+            basic_auth_status = "enabled" if new_config["basic_auth_enabled"] else "disabled"
+            logging.info(f"Basic HTTP authentication {basic_auth_status}")
+        
         # Save new config
         save_config(new_config)
         
@@ -1569,7 +1612,8 @@ def update_security():
                 }), 400
             
             ADMIN_PASSWORD_HASH = hash_password(new_password)
-            logging.warning(f"Admin password changed by {active_sessions.get(request.headers.get('Authorization','').replace('Bearer ',''), {}).get('username', 'unknown')}")
+            username = get_current_username() or 'unknown'
+            logging.warning(f"Admin password changed by {username}")
         
         # Update API key
         if "new_api_key" in data and data["new_api_key"]:
@@ -1581,7 +1625,8 @@ def update_security():
                 }), 400
             
             API_KEY = new_api_key
-            logging.warning(f"API key changed by {active_sessions.get(request.headers.get('Authorization','').replace('Bearer ',''), {}).get('username', 'unknown')}")
+            username = get_current_username() or 'unknown'
+            logging.warning(f"API key changed by {username}")
         
         return jsonify({
             "status": "success",

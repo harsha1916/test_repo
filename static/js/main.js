@@ -908,6 +908,9 @@ function displayConfiguration(config) {
     
     // Advanced RFID settings
     document.getElementById('wiegandTimeout').value = config.wiegand_timeout_ms;
+    
+    // Basic Auth setting
+    document.getElementById('basicAuthEnabled').checked = config.basic_auth_enabled !== false; // Default to true if not set
 }
 
 function initConfiguration() {
@@ -967,6 +970,11 @@ function initConfiguration() {
     
     document.getElementById('setManualTimeBtn').addEventListener('click', async () => {
         await setManualTime();
+    });
+    
+    // Save Authentication Settings button
+    document.getElementById('saveAuthSettingsBtn').addEventListener('click', async () => {
+        await saveAuthSettings();
     });
 }
 
@@ -1121,6 +1129,41 @@ async function updateSecuritySettings() {
         }
     } else {
         showNotification(result?.data?.message || 'Failed to update security settings', 'error');
+    }
+}
+
+async function saveAuthSettings() {
+    if (!currentConfig) {
+        showNotification('Configuration not loaded. Please refresh the page.', 'error');
+        return;
+    }
+    
+    const basicAuthEnabled = document.getElementById('basicAuthEnabled').checked;
+    
+    const newConfig = {
+        ...currentConfig,
+        basic_auth_enabled: basicAuthEnabled
+    };
+    
+    const saveBtn = document.getElementById('saveAuthSettingsBtn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Saving...</span>';
+    
+    const result = await apiCall('/update_config', {
+        method: 'POST',
+        body: JSON.stringify({ config: newConfig })
+    });
+    
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalText;
+    
+    if (result && result.ok) {
+        const status = basicAuthEnabled ? 'enabled' : 'disabled';
+        showNotification(`Basic HTTP authentication ${status} successfully!`, 'success');
+        currentConfig = newConfig;
+    } else {
+        showNotification(result?.data?.message || 'Failed to save authentication settings', 'error');
     }
 }
 

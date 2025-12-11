@@ -831,6 +831,48 @@
                     </form>
                 </div>
 
+                <div class="card">
+                    <h3>🔐 API Authentication Settings</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Configure authentication methods for API access.</p>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: flex-start; gap: 15px; cursor: pointer; padding: 10px; border-radius: 4px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f9f9f9'" onmouseout="this.style.backgroundColor='transparent'">
+                            <div class="toggle-switch" style="flex-shrink: 0; margin-top: 2px;">
+                                <input type="checkbox" id="basicAuthEnabled">
+                                <span></span>
+                            </div>
+                            <div style="flex: 1;">
+                                <strong style="display: block; margin-bottom: 5px;">Enable Basic HTTP Authentication</strong>
+                                <small style="display: block; color: #666; line-height: 1.5;">
+                                    When enabled, API endpoints accept username:password in URLs or Authorization headers (Basic Auth). 
+                                    Token-based authentication will always work regardless of this setting.
+                                </small>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="info" style="margin-top: 15px; padding: 15px; background: #f0f7ff; border-left: 4px solid #2196F3; border-radius: 4px;">
+                        <strong>ℹ️ About Basic HTTP Authentication:</strong><br>
+                        <ul style="margin: 10px 0 0 20px; padding: 0; color: #555;">
+                            <li><strong>Enabled:</strong> API accepts both token-based and Basic Auth (username:password)</li>
+                            <li><strong>Disabled:</strong> Only token-based authentication is accepted</li>
+                            <li>Basic Auth can be used in URLs: <code>http://username:password@host/api</code></li>
+                            <li>Or in headers: <code>Authorization: Basic base64(username:password)</code></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" id="saveAuthSettingsBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Authentication Settings
+                        </button>
+                    </div>
+                </div>
+
                 <div class="info" style="margin-top: 20px;">
                     <strong>ℹ️ About Wiegand Formats:</strong><br>
                     <strong>26-bit:</strong> Standard format used by most proximity cards (125kHz). Supports 8-bit facility code and 16-bit card number.<br>
